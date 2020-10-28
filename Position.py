@@ -2,23 +2,17 @@
 # Class helper to calculate Position for Wall Drawing Robot with Stepper Motor
 
 from math import *
-
-class Stepper():
-    def __init__(self, counts_per_mm):
-        self. counts_per_mm = counts_per_mm
-        self.old = 0
-    
-    def goto_pos(self, lenght):
-        print("DRIVE TO: " +str(lenght))
-        
+from Stepper import *
         
 class Position():
     def __init__(self):
-        self.stepper1 = Stepper(1)
-        self.stepper2 = Stepper(1)
+        self.stepper1 = Stepper("Left",  mm_per_step = 0.08,
+                        pin_dir = 31, pin_step = 33, actual=3750)
+        self.stepper2 = Stepper("Right", mm_per_step = 0.08,
+                        pin_dir = 35, pin_step = 37, actual=7831)
         
-        self.motor_dist = 100
-        self.canvas_high = 100
+        self.motor_dist = 550
+        self.canvas_high = 300
 
     def set_current_pos(self, x, y):
         self.current_x = x
@@ -63,17 +57,17 @@ class Position():
         """drives the gondola to the position x,y [mm]"""      
         line_generator = self.bresenham(self.current_x, self.current_y, x, y)
 
+        print("Drive to: " + str(x) + " "+ str(y))
+        
         while True:
             try:
                 path_x, path_y = line_generator.next()
             except StopIteration:
-                break
-            print(path_x, path_y)    
-            wire1, wire2 = self.get_wire_lenght(path_x, path_y)            
+                break          
+            wire1, wire2 = self.get_wire_lenght(path_x, path_y)
             self.stepper1.goto_pos(wire1)
             self.stepper2.goto_pos(wire2)
-
-        print()
+        self.set_current_pos(x,y)
             
     def get_wire_lenght(self,x, y):
         """calc the wire lenght for two motors, pythagoras
@@ -91,8 +85,8 @@ if __name__ == "__main__":
 
 
     position = Position()
-    position.set_current_pos(10,40)
-    position.drive_to(10,41)
+    position.set_current_pos(0,0)
+    position.drive_to(1,0)
 
 
         
