@@ -37,7 +37,7 @@ class Stepper():
                 self.do_step(-1)
                 self.actual_steps -= 1
             
-    def do_step(self, steps, speed = 0.003):
+    def do_step(self, steps, speed = 0.002):
         """Do Motor Steps. +steps or -steps changes direction)"""
         if steps > 0:
             GPIO.output(self.pin_dir, True)
