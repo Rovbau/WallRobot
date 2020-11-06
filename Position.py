@@ -19,10 +19,12 @@ class Position():
         self.current_y = 0
 
     def set_current_pos(self, x, y):
+        """Set program state to position x,y"""
         self.current_x = x
         self.current_y = y
         
     def get_current_pos(self):
+        """Get the current gondola position"""
         return(self.current_x, self.current_y)
        
     def bresenham(self, x0, y0, x1, y1):
@@ -60,7 +62,7 @@ class Position():
             D += 2*dy
             
     def drive_to(self, x, y):
-        """drives the gondola to the position x,y [mm]"""      
+        """Drives the gondola to the position x,y [mm]"""      
         line_generator = self.bresenham(self.current_x, self.current_y, x, y)
 
         #print("Drive to: " + str(round(x,2)) + " "+ str(round(y,2)))
@@ -87,6 +89,7 @@ class Position():
 
 
     def draw_text(self, text, zoom):
+        """Draw a very rude text font. Input: STR Text, INT zoomfactor"""
         SPACING = 35 * zoom
         local_x, local_y = self.get_current_pos()
 
@@ -100,10 +103,12 @@ class Position():
             else:
                 lines = font["-"]
             for line in lines:
-                print(line[1] * zoom)
                 self.drive_to(local_x + line[1]* zoom, local_y + line[2]* zoom)
 
     def draw_circle(self, g_code, x, y, i, j):
+        """Draw a circel from g_code command G02= CW, G03=CCW
+        Exapl: G03, endpos_x, endpos_y, deltaR_x_toCurrentPos, deltaR_y_toCurrentPos"""
+        
         if g_code == "G03":
             rotation = 361
             rotation_step = 1
@@ -115,15 +120,19 @@ class Position():
             
         actual_x, actual_y = self.get_current_pos()
 
+        #Global center pos.
         center_x = actual_x + i
         center_y = actual_y + j
         #print(center_x, center_y)
-        
+
+        #shift center to 0,0
         reduced_x = actual_x - center_x 
         reduced_y = actual_y - center_y
         #print(reduced_x, reduced_y)
 
+        #Tolerance at the end of circel command. radii bigger->higher tolerance
         tolerance = 0.2 + (max(abs(reduced_x), abs(reduced_y)) / 1000)
+        #Rotation step depends on radii. radii bigger->smaller steps
         rotation_step = rotation_step * (0.1 + (1  / (max(abs(reduced_x), abs(reduced_y))/10)))
      
         for arc in range(0,rotation*10,int(rotation_step*10)):
@@ -134,7 +143,8 @@ class Position():
                 break
             #print("Diff X: "+str(abs(actual_x - x)))
             #print("Diff Y: "+str(abs(actual_y - y)))
-            
+
+            #Rotationmatrix
             rotate_x = reduced_x * cos(angle) - reduced_y * sin(angle)
             rotate_y = reduced_x * sin(angle) + reduced_y * cos(angle)
             #print(rotate_x, rotate_y)
@@ -145,13 +155,32 @@ class Position():
             #print(drive_x, drive_y)
             
         self.drive_to(x,y)
+
+        #G3 start/end pos. does not meet tolerance
         if abs(actual_x - x) > 0.5 or abs(actual_y - y) > 0.5:
             print(Fore.RED + "Circel Command FAILED Diff: "
                   + str(round(actual_x - x, 3)) + " "
                   + str(round(actual_y - y, 3))
                   + Style.RESET_ALL)
-            #print(Style.RESET_ALL)
-            
+
+    def draw_gcode(self, command):
+        """Draw the G_code command
+        G00 = fast_no_drawing; G01 = draw
+        G02 = CW circel; G03 = CCW circel
+        Input: LIST [g_code, x, y, i, y]"""
+        
+        if command[0] == "G00":
+            if command[1] != None and command[2] != None:
+                self.drive_to(x = float(command[1]), y = float(command[2]))
+
+        if command[0] == "G01":
+            if command[1] != None and command[2] != None:
+                self.drive_to(x = float(command[1]), y = float(command[2]))
+                self.drive_to(x = command[1], y = command[2])
+                
+        if command[0] == "G02" or command[0] == "G03":
+            self.draw_circle(g_code = command[0], x = command[1], y = command[2], i = command[4], j = command[5])
+                
 font ={
 "A":[["G1",10,27],["G1",20,0],["G0",5,10],["G1",15,10]],
 "B":[["G1",0 ,27],["G1",15,27],["G1",18,20],["G1",10,14],["G1",18,7 ],["G1",15,0 ],["G1",0 ,0 ]],
@@ -189,10 +218,10 @@ if __name__ == "__main__":
 
 
     position = Position()
-    position.set_current_pos(10,10)
-    #position.drive_to(1,0)
-    #position.draw_text("A")
-    position.draw_circle(12,12,0,2)
+    position.set_current_pos(0,0)
+    position.draw_text("M", 1.0)
+    position.drive_to(0,0)
+    position.draw_gcode(["G03",0,50,None, 0, 25])
 
         
     
