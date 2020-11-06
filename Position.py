@@ -106,10 +106,10 @@ class Position():
     def draw_circle(self, g_code, x, y, i, j):
         if g_code == "G03":
             rotation = 361
-            rotation_step = 0.1
+            rotation_step = 1
         elif g_code == "G02":
             rotation = -361
-            rotation_step = -0.1
+            rotation_step = -1
         else:
             print("Error parsing Code G02/G03")
             
@@ -124,6 +124,7 @@ class Position():
         #print(reduced_x, reduced_y)
 
         tolerance = 0.2 + (max(abs(reduced_x), abs(reduced_y)) / 1000)
+        rotation_step = rotation_step * (0.1 + (1  / (max(abs(reduced_x), abs(reduced_y))/10)))
      
         for arc in range(0,rotation*10,int(rotation_step*10)):
             angle = radians(float(arc)/10)
