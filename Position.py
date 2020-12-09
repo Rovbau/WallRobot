@@ -3,18 +3,27 @@
 
 from math import *
 from Stepper import *
+from Lifter import *
 from colorama import Fore, Style
         
 class Position():
     def __init__(self):
-        self.stepper1 = Stepper("Left",  mm_per_step = 0.08,
-                        pin_dir = 35, pin_step = 37, actual=3750)
-        self.stepper2 = Stepper("Right", mm_per_step = 0.08,
-                        pin_dir = 31, pin_step = 33, actual=7831)
-        
-        self.motor_dist = 550
-        self.canvas_high = 300
 
+        self.motor_dist = 816
+        self.canvas_high = 500
+
+        mm_per_step = 0.08
+        
+        length1, length2 = self.get_wire_lenght(0,0)
+        home_counts1 = length1 / mm_per_step
+        home_counts2 = length2 / mm_per_step
+       
+        self.stepper1 = Stepper("Left",  mm_per_step = 0.08,
+                        pin_dir = 35, pin_step = 37, actual = home_counts1)
+        self.stepper2 = Stepper("Right", mm_per_step = 0.08,
+                        pin_dir = 31, pin_step = 33, actual = home_counts2)
+        self.lifter = Lifter(PIN = 29)
+        
         self.current_x = 0
         self.current_y = 0
 
@@ -171,14 +180,17 @@ class Position():
         
         if command[0] == "G00":
             if command[1] != None and command[2] != None:
+                self.lifter.goto("up")
                 self.drive_to(x = float(command[1]), y = float(command[2]))
 
         if command[0] == "G01":
             if command[1] != None and command[2] != None:
+                self.lifter.goto("down")
                 self.drive_to(x = float(command[1]), y = float(command[2]))
                 self.drive_to(x = command[1], y = command[2])
                 
         if command[0] == "G02" or command[0] == "G03":
+            self.lifter.goto("down")
             self.draw_circle(g_code = command[0], x = command[1], y = command[2], i = command[4], j = command[5])
                 
 font ={
