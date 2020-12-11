@@ -4,6 +4,7 @@
 from math import *
 from Stepper import *
 from Lifter import *
+from Gcode import *
 from colorama import Fore, Style
         
 class Position():
@@ -12,17 +13,19 @@ class Position():
         self.motor_dist = 816
         self.canvas_high = 500
 
-        mm_per_step = 0.08
+        mm_per_step = 0.089
         
         length1, length2 = self.get_wire_lenght(0,0)
         home_counts1 = length1 / mm_per_step
         home_counts2 = length2 / mm_per_step
        
-        self.stepper1 = Stepper("Left",  mm_per_step = 0.08,
+        self.stepper1 = Stepper("Left",  mm_per_step = 0.089,
                         pin_dir = 35, pin_step = 37, actual = home_counts1)
-        self.stepper2 = Stepper("Right", mm_per_step = 0.08,
+        self.stepper2 = Stepper("Right", mm_per_step = 0.089,
                         pin_dir = 31, pin_step = 33, actual = home_counts2)
         self.lifter = Lifter(PIN = 29)
+
+        self.gcode_text = Gcode()
         
         self.current_x = 0
         self.current_y = 0
@@ -99,20 +102,34 @@ class Position():
 
     def draw_text(self, text, zoom):
         """Draw a very rude text font. Input: STR Text, INT zoomfactor"""
-        SPACING = 35 * zoom
         local_x, local_y = self.get_current_pos()
 
         for letter in text.upper():
-            print(letter)
-            self.drive_to(local_x + SPACING, local_y)
+            command_generator = self.gcode_text.text_font("TextFont.ngc", letter)
+            
+            while True:
+                try:
+                    command = command_generator.next()
+                except StopIteration:
+                    break
+                
+
+                if command[0] == "G00":
+                    self.lifter.goto("up")
+                    if command[1] != None and command[2] != None:
+                        print(command)
+                        self.drive_to(x = zoom * float(command[1]) + local_x,
+                                      y = zoom * float(command[2]) + local_y)
+
+                if command[0] == "G01":
+                    self.lifter.goto("down")
+                    if command[1] != None and command[2] != None:
+                        print(command)
+                        self.drive_to(x = zoom * float(command[1]) + local_x,
+                                      y = zoom * float(command[2]) + local_y)
+
             local_x, local_y = self.get_current_pos()
 
-            if letter in font: 
-                lines = font[letter]
-            else:
-                lines = font["-"]
-            for line in lines:
-                self.drive_to(local_x + line[1]* zoom, local_y + line[2]* zoom)
 
     def draw_circle(self, g_code, x, y, i, j):
         """Draw a circel from g_code command G02= CW, G03=CCW
@@ -187,7 +204,7 @@ class Position():
             if command[1] != None and command[2] != None:
                 self.lifter.goto("down")
                 self.drive_to(x = float(command[1]), y = float(command[2]))
-                self.drive_to(x = command[1], y = command[2])
+                #self.drive_to(x = command[1], y = command[2])
                 
         if command[0] == "G02" or command[0] == "G03":
             self.lifter.goto("down")
