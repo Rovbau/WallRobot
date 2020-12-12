@@ -10,18 +10,18 @@ from colorama import Fore, Style
 class Position():
     def __init__(self):
 
-        self.motor_dist = 816
+        self.motor_dist = 720
         self.canvas_high = 500
 
-        mm_per_step = 0.089
+        mm_per_step = 0.10
         
         length1, length2 = self.get_wire_lenght(0,0)
         home_counts1 = length1 / mm_per_step
         home_counts2 = length2 / mm_per_step
        
-        self.stepper1 = Stepper("Left",  mm_per_step = 0.089,
+        self.stepper1 = Stepper("Left",  mm_per_step = mm_per_step,
                         pin_dir = 35, pin_step = 37, actual = home_counts1)
-        self.stepper2 = Stepper("Right", mm_per_step = 0.089,
+        self.stepper2 = Stepper("Right", mm_per_step = mm_per_step,
                         pin_dir = 31, pin_step = 33, actual = home_counts2)
         self.lifter = Lifter(PIN = 29)
 
@@ -87,6 +87,7 @@ class Position():
             wire1, wire2 = self.get_wire_lenght(path_x, path_y)
             self.stepper1.goto_pos(wire1)
             self.stepper2.goto_pos(wire2)
+
         self.set_current_pos(x,y)
             
     def get_wire_lenght(self,x, y):
@@ -101,7 +102,7 @@ class Position():
 
 
     def draw_text(self, text, zoom):
-        """Draw a very rude text font. Input: STR Text, INT zoomfactor"""
+        """Draw a text font. Input: STR Text, INT zoomfactor"""
         local_x, local_y = self.get_current_pos()
 
         for letter in text.upper():
@@ -194,7 +195,7 @@ class Position():
         G00 = fast_no_drawing; G01 = draw
         G02 = CW circel; G03 = CCW circel
         Input: LIST [g_code, x, y, i, y]"""
-        
+        print(command)
         if command[0] == "G00":
             if command[1] != None and command[2] != None:
                 self.lifter.goto("up")
